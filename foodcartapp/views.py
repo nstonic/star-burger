@@ -1,3 +1,7 @@
+import json
+from pprint import pprint
+
+from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
 from django.templatetags.static import static
 
@@ -57,6 +61,6 @@ def product_list_api(request):
     })
 
 
-def register_order(request):
-    # TODO это лишь заглушка
+def register_order(request: WSGIRequest):
+    pprint(json.loads(request.body.decode()))
     return JsonResponse({})
