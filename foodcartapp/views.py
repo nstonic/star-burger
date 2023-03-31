@@ -64,11 +64,6 @@ def register_order(request: WSGIRequest):
     order_obj = json.loads(request.body.decode())
     products = order_obj.pop('products')
     order = Order.objects.create(**order_obj)
-    """{'address': 'Аэродромная 99, 49',
-     'firstname': 'Михаил',
-     'lastname': 'Акопян',
-     'phonenumber': '89371752458',
-     'products': [{'product': 2, 'quantity': 1}]}"""
     ProductInCart.objects.bulk_create(
         [
             ProductInCart(
