@@ -5,8 +5,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
 from django.templatetags.static import static
 
-
-from .models import Product
+from .models import Product, Order, ProductInCart
 
 
 def banners_list_api(request):
@@ -62,5 +61,23 @@ def product_list_api(request):
 
 
 def register_order(request: WSGIRequest):
-    pprint(json.loads(request.body.decode()))
+    order_obj = json.loads(request.body.decode())
+    products = order_obj.pop('products')
+    order = Order.objects.create(**order_obj)
+    """{'address': 'Аэродромная 99, 49',
+     'firstname': 'Михаил',
+     'lastname': 'Акопян',
+     'phonenumber': '89371752458',
+     'products': [{'product': 2, 'quantity': 1}]}"""
+    ProductInCart.objects.bulk_create(
+        [
+            ProductInCart(
+                product=Product.objects.get(pk=product['product']),
+                order=order,
+                quantity=product['quantity']
+            )
+            for product in products
+        ]
+    )
+
     return JsonResponse({})

@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils.timezone import now
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Restaurant(models.Model):
@@ -121,3 +123,57 @@ class RestaurantMenuItem(models.Model):
 
     def __str__(self):
         return f"{self.restaurant.name} - {self.product.name}"
+
+
+class ProductInCart(models.Model):
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='in_carts',
+        verbose_name='Товар',
+        db_index=True
+    )
+    quantity = models.PositiveIntegerField('Количество')
+    order = models.ForeignKey(
+        'Order',
+        on_delete=models.CASCADE,
+        related_name='products_in_cart',
+        verbose_name='Заказ',
+        db_index=True
+    )
+
+    class Meta:
+        verbose_name = 'Продукт в корзине'
+        verbose_name_plural = 'Продукты в корзинах'
+
+    def __str__(self):
+        return f'Заказ {self.order}: {self.product} - {self.quantity}'
+
+
+class Order(models.Model):
+    STATUSES = [
+        ('NEW', 'Создан'),
+        ('PROCESSING', 'В работе'),
+        ('CLOSED', 'Закрыт'),
+        ('CANCELED', 'Отменён')
+    ]
+
+    address = models.CharField('Адрес', max_length=200)
+    firstname = models.CharField('Имя', max_length=30)
+    lastname = models.CharField('Фамилия', max_length=50)
+    phonenumber = PhoneNumberField('Телефон', region='RU', db_index=True)
+    created_at = models.DateTimeField('Создан', default=now)
+    status = models.CharField(
+        'Статус',
+        max_length=10,
+        choices=STATUSES,
+        default='NEW'
+    )
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Заказ от {self.created_at} ({self.status})'
