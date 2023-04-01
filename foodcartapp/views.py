@@ -1,3 +1,4 @@
+import phonenumbers
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import status
 from rest_framework.response import Response
@@ -63,31 +64,19 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     order_obj = request.data
-    try:
-        products = order_obj.pop('products')
-    except KeyError:
-        return Response(
-            {'error': 'products key is not presented'},
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY
-        )
-    if not isinstance(products, list):
-        return Response(
-            {'error': 'products key must be list of product objects'},
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY
-        )
-    if not products:
-        return Response(
-            {'error': 'products list is empty'},
-            status=status.HTTP_422_UNPROCESSABLE_ENTITY
-        )
+    if error_message := validate_order(order_obj):
+        return entity_error(error_message)
 
+    products = order_obj.pop('products')
     order = Order.objects.create(**order_obj)
-
     products_in_cart = []
     for product in products:
+        quantity = product['quantity']
         try:
-            quantity = product['quantity']
             product = Product.objects.get(pk=product['product'])
+        except ObjectDoesNotExist:
+            return entity_error(f'unknown product with id {product["product"]}')
+        else:
             products_in_cart.append(
                 ProductInCart(
                     product=product,
@@ -95,17 +84,58 @@ def register_order(request):
                     quantity=quantity
                 )
             )
-        except ObjectDoesNotExist:
-            return Response(
-                {'error': 'product does not exists'},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY
-            )
-        except (TypeError, KeyError):
-            return Response(
-                {'error': 'product must be object with product and quantity keys'},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY
-            )
-
     ProductInCart.objects.bulk_create(products_in_cart)
-
     return Response({})
+
+
+def entity_error(msg: str):
+    return Response(
+        {'error': msg},
+        status=status.HTTP_422_UNPROCESSABLE_ENTITY
+    )
+
+
+def validate_order(order_obj: dict) -> str | None:
+    order_fields = {'products': list, 'firstname': str, 'lastname': str, 'phonenumber': str, 'address': str}
+    product_fields = {'product': int, 'quantity': int}
+    missing_fields = []
+    null_fields = []
+
+    def validate_fields(obj, required_fields):
+        nonlocal null_fields
+        nonlocal missing_fields
+
+        for field in required_fields:
+            if field not in obj:
+                missing_fields.append(field)
+
+        for field, value in obj.items():
+            if field in required_fields:
+                if not value:
+                    null_fields.append(field)
+                    continue
+                required_type = required_fields[field]
+                if not isinstance(value, required_type):
+                    return f'{field} must be {required_type.__name__}, not {type(value).__name__}'
+
+    if error_message := validate_fields(order_obj, order_fields):
+        return error_message
+
+    if 'products' in order_obj:
+        products = order_obj['products']
+        if not products:
+            return f'products cannot be empty list or null'
+
+        for product in products:
+            if error_message := validate_fields(product, product_fields):
+                return error_message
+
+    if missing_fields:
+        return f'{", ".join(missing_fields)} is required fields'
+
+    if null_fields:
+        return f'{", ".join(null_fields)} cannot be null or empty'
+
+    phone_number = phonenumbers.parse(order_obj['phonenumber'], 'RU')
+    if not phonenumbers.is_valid_number(phone_number):
+        return 'invalid phonenumber'
