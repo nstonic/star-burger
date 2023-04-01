@@ -1,3 +1,5 @@
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from rest_framework import status
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.templatetags.static import static
@@ -61,17 +63,49 @@ def product_list_api(request):
 @api_view(['POST'])
 def register_order(request):
     order_obj = request.data
-    products = order_obj.pop('products')
+    try:
+        products = order_obj.pop('products')
+    except KeyError:
+        return Response(
+            {'error': 'products key is not presented'},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+    if not isinstance(products, list):
+        return Response(
+            {'error': 'products key must be list of product objects'},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+    if not products:
+        return Response(
+            {'error': 'products list is empty'},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+
     order = Order.objects.create(**order_obj)
-    ProductInCart.objects.bulk_create(
-        [
-            ProductInCart(
-                product=Product.objects.get(pk=product['product']),
-                order=order,
-                quantity=product['quantity']
+
+    products_in_cart = []
+    for product in products:
+        try:
+            quantity = product['quantity']
+            product = Product.objects.get(pk=product['product'])
+            products_in_cart.append(
+                ProductInCart(
+                    product=product,
+                    order=order,
+                    quantity=quantity
+                )
             )
-            for product in products
-        ]
-    )
+        except ObjectDoesNotExist:
+            return Response(
+                {'error': 'product does not exists'},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+        except (TypeError, KeyError):
+            return Response(
+                {'error': 'product must be object with product and quantity keys'},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+
+    ProductInCart.objects.bulk_create(products_in_cart)
 
     return Response({})
