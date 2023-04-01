@@ -1,9 +1,7 @@
-import json
-from pprint import pprint
-
-from django.core.handlers.wsgi import WSGIRequest
+from rest_framework.response import Response
 from django.http import JsonResponse
 from django.templatetags.static import static
+from rest_framework.decorators import api_view
 
 from .models import Product, Order, ProductInCart
 
@@ -60,8 +58,9 @@ def product_list_api(request):
     })
 
 
-def register_order(request: WSGIRequest):
-    order_obj = json.loads(request.body.decode())
+@api_view(['POST'])
+def register_order(request):
+    order_obj = request.data
     products = order_obj.pop('products')
     order = Order.objects.create(**order_obj)
     ProductInCart.objects.bulk_create(
@@ -75,4 +74,4 @@ def register_order(request: WSGIRequest):
         ]
     )
 
-    return JsonResponse({})
+    return Response({})
