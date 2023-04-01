@@ -1,3 +1,7 @@
+from pprint import pprint
+
+from rest_framework.fields import IntegerField
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from django.http import JsonResponse
 from django.templatetags.static import static
@@ -66,11 +70,12 @@ class ProductSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = ProductSerializer(many=True, allow_empty=False)
+    products = ProductSerializer(many=True, allow_empty=False, write_only=True)
+    id = IntegerField(required=False)
 
     class Meta:
         model = Order
-        fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
+        fields = ['id', 'products', 'firstname', 'lastname', 'phonenumber', 'address']
 
 
 @api_view(['POST'])
@@ -89,4 +94,6 @@ def register_order(request):
         for product in products
     ]
     ProductInCart.objects.bulk_create(products_in_cart)
-    return Response({})
+
+    serializer = OrderSerializer(order)
+    return Response(serializer.data)

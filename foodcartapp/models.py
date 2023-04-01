@@ -137,7 +137,7 @@ class ProductInCart(models.Model):
     order = models.ForeignKey(
         'Order',
         on_delete=models.CASCADE,
-        related_name='products_in_cart',
+        related_name='products',
         verbose_name='Заказ',
         db_index=True
     )
