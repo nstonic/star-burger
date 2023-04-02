@@ -142,6 +142,12 @@ class ProductInCart(models.Model):
         verbose_name='Заказ',
         db_index=True
     )
+    price = models.DecimalField(
+        'Цена',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)]
+    )
 
     class Meta:
         verbose_name = 'Продукт в корзине'

@@ -128,6 +128,9 @@ class ProductInCartAdmin(admin.ModelAdmin):
         'product'
     ]
 
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+
 
 class ProductInCartInline(admin.TabularInline):
     model = ProductInCart
@@ -163,4 +166,3 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         ProductInCartInline
     ]
-
