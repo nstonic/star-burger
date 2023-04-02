@@ -87,7 +87,7 @@ def register_order(request):
     order = Order.objects.create(**serializer.validated_data)
     products_in_cart = [
         ProductInCart(
-            product=Product.objects.get(pk=product['product'].id),
+            product=product['product'],
             order=order,
             quantity=product['quantity']
         )
