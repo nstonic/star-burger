@@ -158,6 +158,7 @@ class OrderQuerySet(QuerySet):
                 F('products_in_cart__product__price') * F('products_in_cart__quantity')
             ))
 
+
 class Order(models.Model):
     STATUSES = [
         ('NEW', 'Создан'),
@@ -185,4 +186,4 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f'Заказ от {self.created_at} ({self.status})'
+        return f'Заказ от {self.created_at.strftime("%d.%m.%Y %H:%M:%S")}'
