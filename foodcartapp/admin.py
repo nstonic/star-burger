@@ -144,10 +144,14 @@ class OrderAdmin(admin.ModelAdmin):
         'lastname'
     ]
     list_display = [
+        'id',
+        'status',
         'created_at',
         'phonenumber',
-        'address',
-        'status'
+        'address'
+    ]
+    list_display_links = [
+        'id'
     ]
     readonly_fields = [
         'created_at',
@@ -159,3 +163,4 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         ProductInCartInline
     ]
+
