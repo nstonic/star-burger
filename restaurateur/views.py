@@ -91,14 +91,15 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all()
+    orders = Order.objects.all().calculate_costs().order_by('created_at')
     context = {
-        'order_items': [
+        'orders': [
             {
                 'id': order.id,
                 'client': f'{order.firstname} {order.lastname}',
                 'phonenumber': order.phonenumber,
-                'address': order.address
+                'address': order.address,
+                'cost': order.cost
             } for order in orders
         ]
     }

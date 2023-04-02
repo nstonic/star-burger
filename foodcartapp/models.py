@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db.models import QuerySet, Count, Sum, F
 from django.utils.timezone import now
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -137,7 +138,7 @@ class ProductInCart(models.Model):
     order = models.ForeignKey(
         'Order',
         on_delete=models.CASCADE,
-        related_name='products',
+        related_name='products_in_cart',
         verbose_name='Заказ',
         db_index=True
     )
@@ -149,6 +150,13 @@ class ProductInCart(models.Model):
     def __str__(self):
         return f'Заказ {self.order}: {self.product} - {self.quantity}'
 
+
+class OrderQuerySet(QuerySet):
+    def calculate_costs(self):
+        return self.annotate(
+            cost=Sum(
+                F('products_in_cart__product__price') * F('products_in_cart__quantity')
+            ))
 
 class Order(models.Model):
     STATUSES = [
@@ -169,11 +177,12 @@ class Order(models.Model):
         choices=STATUSES,
         default='NEW'
     )
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
-        ordering = ['created_at']
+        ordering = ['-created_at']
 
     def __str__(self):
         return f'Заказ от {self.created_at} ({self.status})'
