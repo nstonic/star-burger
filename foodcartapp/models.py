@@ -173,7 +173,7 @@ class Order(models.Model):
     class Meta:
         verbose_name = 'Заказ'
         verbose_name_plural = 'Заказы'
-        ordering = ['-created_at']
+        ordering = ['created_at']
 
     def __str__(self):
         return f'Заказ от {self.created_at} ({self.status})'
