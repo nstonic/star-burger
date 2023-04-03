@@ -161,7 +161,7 @@ class OrderQuerySet(QuerySet):
     def calculate_costs(self):
         return self.annotate(
             cost=Sum(
-                F('products_in_cart__product__price') * F('products_in_cart__quantity')
+                F('products_in_cart__price') * F('products_in_cart__quantity')
             ))
 
 

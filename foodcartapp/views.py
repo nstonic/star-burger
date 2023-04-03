@@ -89,7 +89,8 @@ def register_order(request):
         ProductInCart(
             product=product['product'],
             order=order,
-            quantity=product['quantity']
+            quantity=product['quantity'],
+            price=product['product'].price
         )
         for product in products
     ]

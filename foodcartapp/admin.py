@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from django.contrib import admin
 from django.shortcuts import reverse
 from django.templatetags.static import static
@@ -118,24 +120,29 @@ class ProductInCartAdmin(admin.ModelAdmin):
     list_display = [
         'order',
         'product',
+        'price',
         'quantity',
-    ]
-    readonly_fields = [
-        'order',
-        'product'
+        'cost'
     ]
     list_filter = [
         'product'
     ]
+    readonly_fields = [
+        'order',
+        'price',
+        'cost'
+    ]
 
-    def save_formset(self, request, form, formset, change):
-        instances = formset.save(commit=False)
+    def cost(self, product_in_cart):
+        return product_in_cart.price * product_in_cart.quantity
 
 
 class ProductInCartInline(admin.TabularInline):
     model = ProductInCart
-    readonly_fields = ['product']
     extra = 0
+    readonly_fields = [
+        'price'
+    ]
 
 
 @admin.register(Order)
@@ -151,14 +158,16 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'created_at',
         'phonenumber',
-        'address'
+        'address',
+        'cost'
     ]
     list_display_links = [
         'id'
     ]
     readonly_fields = [
         'created_at',
-        'status'
+        'status',
+        'cost'
     ]
     list_filter = [
         'status'
@@ -166,3 +175,16 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         ProductInCartInline
     ]
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save()
+        if not change:
+            for instance in instances:
+                instance.price = instance.product.price
+                instance.save()
+
+    def cost(self, order):
+        return sum(
+            [product.price * product.quantity
+             for product in order.products_in_cart.all()]
+        )
