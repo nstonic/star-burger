@@ -1,5 +1,6 @@
 from pprint import pprint
 
+from django.db import transaction
 from rest_framework.fields import IntegerField
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -79,6 +80,7 @@ class OrderSerializer(ModelSerializer):
 
 
 @api_view(['POST'])
+@transaction.atomic
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
