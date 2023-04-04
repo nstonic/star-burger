@@ -1,9 +1,10 @@
-from pprint import pprint
-
+from django.conf import settings
 from django.contrib import admin
+from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Product, ProductInCart, Order
 from .models import ProductCategory
@@ -158,16 +159,14 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'created_at',
         'phonenumber',
-        'address',
-        'cost'
+        'address'
     ]
     list_display_links = [
         'id'
     ]
     readonly_fields = [
         'created_at',
-        'status',
-        'cost'
+        'status'
     ]
     list_filter = [
         'status'
@@ -183,8 +182,11 @@ class OrderAdmin(admin.ModelAdmin):
                 instance.price = instance.product.price
                 instance.save()
 
-    def cost(self, order):
-        return sum(
-            [product.price * product.quantity
-             for product in order.products_in_cart.all()]
-        )
+
+    def response_change(self, request, obj):
+        response = super().response_change(request, obj)
+        if next_url := request.GET.get('next'):
+            if url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS):
+                return HttpResponseRedirect(next_url)
+        else:
+            return response

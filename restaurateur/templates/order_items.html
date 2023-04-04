@@ -11,26 +11,27 @@
   <br/>
   <br/>
   <div class="container">
-   <table class="table table-responsive">
-    <tr>
-      <th>ID заказа</th>
-      <th>Стоимость заказа</th>
-      <th>Клиент</th>
-      <th>Телефон</th>
-      <th>Адрес доставки</th>
-      <th>Редактирование</th>
-    </tr>
-
-    {% for order in orders %}
+    <table class="table table-responsive">
       <tr>
-        <td>{{ order.id }}</td>
-        <td>{{ order.cost }}</td>
-        <td>{{ order.client }}</td>
-        <td>{{ order.phonenumber }}</td>
-        <td>{{ order.address }}</td>
-        <td><a href="{% url "admin:foodcartapp_order_change" object_id=order.id %}">Редактировать</a></td>
+        <th>ID заказа</th>
+        <th>Стоимость заказа</th>
+        <th>Клиент</th>
+        <th>Телефон</th>
+        <th>Адрес доставки</th>
+        <th>Редактирование</th>
       </tr>
-    {% endfor %}
-   </table>
+
+      {% for order in orders %}
+        <tr>
+          <td>{{ order.id }}</td>
+          <td>{{ order.cost }}</td>
+          <td>{{ order.client }}</td>
+          <td>{{ order.phonenumber }}</td>
+          <td>{{ order.address }}</td>
+          <td><a href="{% url "admin:foodcartapp_order_change" object_id=order.id %}?next={{ current_url | urlencode }}">Редактировать</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </table>
   </div>
 {% endblock %}
