@@ -177,7 +177,7 @@ class OrderAdmin(admin.ModelAdmin):
     ]
 
     def save_formset(self, request, form, formset, change):
-        instances = formset.save()
+        instances = formset.save(commit=False)
         if not change:
             for instance in instances:
                 instance.price = instance.product.price
