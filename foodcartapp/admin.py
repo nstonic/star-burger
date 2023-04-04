@@ -165,8 +165,7 @@ class OrderAdmin(admin.ModelAdmin):
         'id'
     ]
     readonly_fields = [
-        'created_at',
-        'status'
+        'created_at'
     ]
     list_filter = [
         'status'

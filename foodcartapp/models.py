@@ -167,9 +167,10 @@ class OrderQuerySet(QuerySet):
 
 class Order(models.Model):
     STATUSES = [
-        ('NEW', 'Создан'),
-        ('PROCESSING', 'В работе'),
-        ('CLOSED', 'Закрыт'),
+        ('NEW', 'Необработан'),
+        ('PICKING', 'Сборка'),
+        ('DELIVERING', 'Доставка'),
+        ('CLOSED', 'Завершён'),
         ('CANCELED', 'Отменён')
     ]
 
@@ -182,8 +183,10 @@ class Order(models.Model):
         'Статус',
         max_length=10,
         choices=STATUSES,
-        default='NEW'
+        default='NEW',
+        db_index=True
     )
+    comment = models.TextField('Комментарий', null=True, blank=True)
     objects = OrderQuerySet.as_manager()
 
     class Meta:
