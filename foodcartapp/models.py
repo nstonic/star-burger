@@ -179,6 +179,8 @@ class Order(models.Model):
     lastname = models.CharField('Фамилия', max_length=50)
     phonenumber = PhoneNumberField('Телефон', region='RU', db_index=True)
     created_at = models.DateTimeField('Создан', default=now)
+    processed_at = models.DateTimeField('Обработан менеджером', blank=True, null=True)
+    delivered_at = models.DateTimeField('Доставлен', blank=True, null=True)
     comment = models.TextField('Комментарий', null=True, blank=True)
     status = models.CharField(
         'Статус',
