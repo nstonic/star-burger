@@ -176,11 +176,11 @@ class OrderAdmin(admin.ModelAdmin):
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
-        if not change:
-            for instance in instances:
+        for instance in instances:
+            if not change or not instance.price:
                 instance.price = instance.product.price
-                instance.save()
-
+            instance.save()
+        formset.save()
 
     def response_change(self, request, obj):
         response = super().response_change(request, obj)
