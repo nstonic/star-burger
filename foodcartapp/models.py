@@ -179,6 +179,7 @@ class Order(models.Model):
     lastname = models.CharField('Фамилия', max_length=50)
     phonenumber = PhoneNumberField('Телефон', region='RU', db_index=True)
     created_at = models.DateTimeField('Создан', default=now)
+    comment = models.TextField('Комментарий', null=True, blank=True)
     status = models.CharField(
         'Статус',
         max_length=10,
@@ -186,7 +187,6 @@ class Order(models.Model):
         default='NEW',
         db_index=True
     )
-    comment = models.TextField('Комментарий', null=True, blank=True)
     objects = OrderQuerySet.as_manager()
 
     class Meta:
