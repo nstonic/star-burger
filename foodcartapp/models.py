@@ -174,6 +174,10 @@ class Order(models.Model):
         ('CANCELED', 'Отменён')
     ]
 
+    PAYMENT_FORMS = [
+        ('CASH', 'Наличка'),
+        ('CASHLESS', 'Безнал')
+    ]
     address = models.CharField('Адрес', max_length=200)
     firstname = models.CharField('Имя', max_length=30)
     lastname = models.CharField('Фамилия', max_length=50)
@@ -187,6 +191,12 @@ class Order(models.Model):
         max_length=10,
         choices=STATUSES,
         default='NEW',
+        db_index=True
+    )
+    payment = models.CharField(
+        'Способ оплаты',
+        max_length=10,
+        choices=PAYMENT_FORMS,
         db_index=True
     )
     objects = OrderQuerySet.as_manager()

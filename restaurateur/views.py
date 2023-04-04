@@ -91,12 +91,13 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all().calculate_costs().order_by('created_at')
+    orders = Order.objects.all().calculate_costs().order_by('-created_at')
     context = {
         'orders': [
             {
                 'id': order.id,
                 'status': order.get_status_display(),
+                'payment': order.get_payment_display(),
                 'client': f'{order.firstname} {order.lastname}',
                 'phonenumber': order.phonenumber,
                 'address': order.address,
