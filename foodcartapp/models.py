@@ -159,6 +159,7 @@ class ProductInCart(models.Model):
 
 class OrderQuerySet(QuerySet):
     def calculate_costs(self):
+        self.prefetch_related('products_in_cart')
         return self.annotate(
             cost=Sum(
                 F('products_in_cart__price') * F('products_in_cart__quantity')
@@ -183,9 +184,31 @@ class Order(models.Model):
     lastname = models.CharField('Фамилия', max_length=50)
     phonenumber = PhoneNumberField('Телефон', region='RU', db_index=True)
     created_at = models.DateTimeField('Создан', default=now, db_index=True)
-    processed_at = models.DateTimeField('Обработан менеджером', blank=True, null=True, db_index=True)
-    delivered_at = models.DateTimeField('Доставлен', blank=True, null=True, db_index=True)
-    comment = models.TextField('Комментарий', null=True, blank=True)
+    processed_at = models.DateTimeField(
+        'Обработан менеджером',
+        blank=True,
+        null=True,
+        db_index=True
+    )
+    delivered_at = models.DateTimeField(
+        'Доставлен',
+        blank=True,
+        null=True,
+        db_index=True
+    )
+    comment = models.TextField(
+        'Комментарий',
+        null=True,
+        blank=True
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='orders',
+        verbose_name='Ресторан'
+    )
     status = models.CharField(
         'Статус',
         max_length=10,

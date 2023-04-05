@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-from foodcartapp.models import Product, Restaurant, Order
+from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -91,17 +91,37 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.all().calculate_costs().order_by('-created_at')
+    orders = Order.objects.all().\
+        calculate_costs().\
+        prefetch_related('products_in_cart__product').\
+        order_by('status', '-created_at')
+    restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
+    for order in orders:
+        restaurants_grouped_by_products = []
+        for product in order.products_in_cart.all():
+            restaurants_grouped_by_products.append({
+                menu_item.restaurant.name
+                for menu_item in restaurant_menu_items
+                if menu_item.product == product.product
+            })
+        order.available_restaurants = []
+        if restaurants_grouped_by_products:
+            available_restaurants = set.intersection(*restaurants_grouped_by_products)
+            for restaurant in available_restaurants:
+                order.available_restaurants.append(restaurant)
+
     context = {
         'orders': [
             {
                 'id': order.id,
                 'status': order.get_status_display(),
                 'payment': order.get_payment_display(),
+                'cost': order.cost or 0,
                 'client': f'{order.firstname} {order.lastname}',
                 'phonenumber': order.phonenumber,
                 'address': order.address,
-                'cost': order.cost or 0
+                'restaurant': order.restaurant,
+                'available_restaurants': order.available_restaurants
             } for order in orders
         ],
         'current_url': request.path
