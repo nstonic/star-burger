@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from django.shortcuts import redirect, render
+from django.utils.timezone import now
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
@@ -178,6 +179,9 @@ def group_restaurants_by_product(order: Order, restaurant_menu_items: QuerySet) 
 def get_coordinates(address: str) -> tuple[_latitude, _longitude]:
     try:
         place = Place.objects.get(address=address)
+        timedelta_after_last_update = place.updated_at - now()
+        if timedelta_after_last_update.days > 0:
+            raise ObjectDoesNotExist
     except ObjectDoesNotExist:
         geocoder_api_key = settings.GEOCODER_API_KEY
         latitude, longitude = fetch_coordinates(geocoder_api_key, address)
