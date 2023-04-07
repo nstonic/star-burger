@@ -142,32 +142,6 @@ class ProductAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(ProductInCart)
-class ProductInCartAdmin(admin.ModelAdmin):
-    search_fields = [
-        'product',
-        'order'
-    ]
-    list_display = [
-        'order',
-        'product',
-        'price',
-        'quantity',
-        'get_cost'
-    ]
-    list_filter = [
-        'product'
-    ]
-    readonly_fields = [
-        'order',
-        'price',
-        'get_cost'
-    ]
-
-    def get_cost(self, product_in_cart):
-        return product_in_cart.price * product_in_cart.quantity
-
-
 class ProductInCartInline(admin.TabularInline):
     model = ProductInCart
     extra = 0
