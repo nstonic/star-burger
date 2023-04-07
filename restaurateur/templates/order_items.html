@@ -35,7 +35,7 @@
           <td>{{ order.address }}</td>
           <td>
             {% if not order.restaurant %}
-              {% if not order.distances_errors %}
+              {% if not order.distance_error %}
                 {% if order.available_restaurants %}
                     <details>
                       <summary>Может быть приготовлен ресторанами:</summary>
