@@ -188,7 +188,7 @@ def get_coordinates(address: str) -> tuple[_latitude, _longitude]:
             raise ObjectDoesNotExist
     except ObjectDoesNotExist:
         geocoder_api_key = settings.GEOCODER_API_KEY
-        latitude, longitude = fetch_coordinates(geocoder_api_key, address)
+        longitude, latitude = fetch_coordinates(geocoder_api_key, address)
         place = Place.objects.create(
             address=address,
             latitude=latitude,
@@ -197,7 +197,7 @@ def get_coordinates(address: str) -> tuple[_latitude, _longitude]:
     return place.latitude, place.longitude
 
 
-def fetch_coordinates(apikey: str, address: str) -> tuple[_latitude, _longitude]:
+def fetch_coordinates(apikey: str, address: str) -> tuple[_longitude, _latitude]:
     base_url = "https://geocode-maps.yandex.ru/1.x"
     response = requests.get(base_url, params={
         "geocode": address,
@@ -208,7 +208,7 @@ def fetch_coordinates(apikey: str, address: str) -> tuple[_latitude, _longitude]
     found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
     if not found_places:
-        return []
+        return _longitude(), _latitude()
 
     most_relevant, *_ = found_places
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
