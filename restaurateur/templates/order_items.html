@@ -35,17 +35,21 @@
           <td>{{ order.address }}</td>
           <td>
             {% if not order.restaurant %}
-              {% if order.restaurants %}
-                <details>
-                  <summary>Может быть приготовлен ресторанами:</summary>
-                  <ul>
-                    {% for restaurant in order.restaurants %}
-                      <li>{{ restaurant.name }} - {{ restaurant.distance_to_client }} км</li>
-                    {% endfor %}
-                  </ul>
-                </details>
+              {% if not order.distances_errors %}
+                {% if order.available_restaurants %}
+                    <details>
+                      <summary>Может быть приготовлен ресторанами:</summary>
+                      <ul>
+                        {% for restaurant in order.available_restaurants %}
+                          <li>{{ restaurant.name }} - {{ restaurant.distance_to_client }} км</li>
+                        {% endfor %}
+                      </ul>
+                    </details>
+                {% else %}
+                  Ни один ресторан не может приготовить этот заказ полностью
+                {% endif %}
               {% else %}
-                Ни один ресторан не может приготовить этот заказ полностью
+                Ошибка определения координат
               {% endif %}
             {% else %}
               Готовится в {{ order.restaurant }}

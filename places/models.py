@@ -16,6 +16,7 @@ class Place(models.Model):
         default=now,
         db_index=True
     )
+    with_an_error = models.BooleanField('Ошибка определения координат', default=False)
 
     class Meta:
         verbose_name = 'Место'

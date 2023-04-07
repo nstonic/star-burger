@@ -121,7 +121,8 @@ def view_orders(request):
                 'phonenumber': order.phonenumber,
                 'address': order.address,
                 'restaurant': order.restaurant,
-                'restaurants': order.available_restaurants
+                'available_restaurants': order.available_restaurants,
+                'distances_errors': order.distances_errors
             } for order in orders_with_distances_to_client
         ],
         'current_url': request.path
