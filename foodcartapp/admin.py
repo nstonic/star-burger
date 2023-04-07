@@ -155,7 +155,7 @@ class ProductInCartAdmin(admin.ModelAdmin):
         'product',
         'price',
         'quantity',
-        'cost'
+        'get_cost'
     ]
     list_filter = [
         'product'
@@ -163,10 +163,10 @@ class ProductInCartAdmin(admin.ModelAdmin):
     readonly_fields = [
         'order',
         'price',
-        'cost'
+        'get_cost'
     ]
 
-    def cost(self, product_in_cart):
+    def get_cost(self, product_in_cart):
         return product_in_cart.price * product_in_cart.quantity
 
 
