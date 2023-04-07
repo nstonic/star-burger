@@ -28,6 +28,9 @@ def get_orders_with_distances_to_client(
 
     for order in orders:
         order.distance_error = False
+        if order.restaurant:
+            order.available_restaurants = []
+            continue
         available_restaurants = set.intersection(
             all_restaurants,
             *_group_restaurants_by_product(order, restaurant_menu_items)
