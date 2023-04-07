@@ -9,14 +9,14 @@ class Place(models.Model):
         'Адрес',
         max_length=100,
         db_index=True,
-        unique=True
+        unique=True,
+        primary_key=True
     )
     updated_at = models.DateTimeField(
         'Последнее обновление',
         default=now,
         db_index=True
     )
-    with_an_error = models.BooleanField('Ошибка определения координат', default=False)
 
     class Meta:
         verbose_name = 'Место'

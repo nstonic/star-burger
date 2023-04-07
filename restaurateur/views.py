@@ -8,8 +8,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from restaurateur.orders_services import get_orders_with_distances_to_client, get_orders_with_available_restaurants, \
-    add_places_to_menu_items, add_places_to_orders
+from restaurateur.orders_services import get_orders_with_distances_to_client, get_orders_with_available_restaurants
 
 
 class Login(forms.Form):
@@ -97,18 +96,18 @@ def view_orders(request):
         calculate_costs(). \
         prefetch_related('products_in_cart__product'). \
         order_by('status', '-created_at')
-    orders_with_places = add_places_to_orders(orders)
 
     restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
-    restaurant_menu_items_with_places = add_places_to_menu_items(restaurant_menu_items)
+    all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items}
 
     orders_with_available_restaurants = get_orders_with_available_restaurants(
-        orders_with_places,
-        restaurant_menu_items_with_places
+        orders,
+        restaurant_menu_items
     )
 
     orders_with_distances_to_client = get_orders_with_distances_to_client(
-        orders_with_available_restaurants
+        orders_with_available_restaurants,
+        all_restaurants
     )
     context = {
         'orders': [
