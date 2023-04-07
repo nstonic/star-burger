@@ -35,22 +35,17 @@
           <td>{{ order.address }}</td>
           <td>
             {% if not order.restaurant %}
-              {% if order.geocoder_error %}
-                Ошибка определения координат
+              {% if order.restaurants %}
+                <details>
+                  <summary>Может быть приготовлен ресторанами:</summary>
+                  <ul>
+                    {% for restaurant in order.restaurants %}
+                      <li>{{ restaurant.name }} - {{ restaurant.distance_to_client }} км</li>
+                    {% endfor %}
+                  </ul>
+                </details>
               {% else %}
-                {% if order.restaurants_with_distances %}
-
-                  <details>
-                    <summary>Может быть приготовлен ресторанами:</summary>
-                    <ul>
-                      {% for restaurant, distance_to_client in order.restaurants_with_distances %}
-                        <li>{{ restaurant }} - {{ distance_to_client }} км</li>
-                      {% endfor %}
-                    </ul>
-                  </details>
-                {% else %}
-                  Ни один ресторан не может приготовить этот заказ полностью
-                {% endif %}
+                Ни один ресторан не может приготовить этот заказ полностью
               {% endif %}
             {% else %}
               Готовится в {{ order.restaurant }}

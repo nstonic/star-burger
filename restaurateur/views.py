@@ -1,26 +1,15 @@
-from typing import Iterator
-
-import requests
 from django import forms
-from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import QuerySet
 from django.shortcuts import redirect, render
-from django.utils.timezone import now
 from django.views import View
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-from geopy.distance import distance
-from requests import HTTPError
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from places.models import Place
-
-_latitude = float
-_longitude = float
+from restaurateur.orders_services import get_orders_with_distances_to_client, get_orders_with_available_restaurants, \
+    add_places_to_menu_items, add_places_to_orders
 
 
 class Login(forms.Form):
@@ -104,8 +93,23 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = get_orders_with_available_restaurants()
+    orders = Order.objects.filter(status__in=['NEW', 'PICKING', 'DELIVERING']). \
+        calculate_costs(). \
+        prefetch_related('products_in_cart__product'). \
+        order_by('status', '-created_at')
+    orders_with_places = add_places_to_orders(orders)
 
+    restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
+    restaurant_menu_items_with_places = add_places_to_menu_items(restaurant_menu_items)
+
+    orders_with_available_restaurants = get_orders_with_available_restaurants(
+        orders_with_places,
+        restaurant_menu_items_with_places
+    )
+
+    orders_with_distances_to_client = get_orders_with_distances_to_client(
+        orders_with_available_restaurants
+    )
     context = {
         'orders': [
             {
@@ -117,99 +121,9 @@ def view_orders(request):
                 'phonenumber': order.phonenumber,
                 'address': order.address,
                 'restaurant': order.restaurant,
-                'restaurants_with_distances': order.restaurants_with_distances,
-                'geocoder_error': order.geocoder_error
-            } for order in orders
+                'restaurants': order.available_restaurants
+            } for order in orders_with_distances_to_client
         ],
         'current_url': request.path
     }
     return render(request, template_name='order_items.html', context=context)
-
-
-def get_orders_with_available_restaurants():
-    orders = Order.objects.all(). \
-        calculate_costs(). \
-        prefetch_related('products_in_cart__product'). \
-        order_by('status', '-created_at')
-    restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
-    for menu_item in restaurant_menu_items:
-        menu_item.restaurant.coordinates = get_coordinates(menu_item.restaurant.address)
-
-    all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items}
-    for order in orders:
-        available_restaurants = set.intersection(
-            all_restaurants,
-            *group_restaurants_by_product(order, restaurant_menu_items)
-        )
-
-        try:
-            restaurants_with_distances = dict(
-                get_restaurant_with_distance_to_client(order, available_restaurants)
-            )
-        except HTTPError:
-            order.restaurants_with_distances = []
-            order.geocoder_error = True
-        else:
-            order.restaurants_with_distances = sorted(restaurants_with_distances.items(), key=lambda r: r[1])
-            order.geocoder_error = False
-    return orders
-
-
-def get_restaurant_with_distance_to_client(order: Order, restaurants: set) -> Iterator[tuple[str, str]]:
-    if order.restaurant:
-        yield str(), str()
-    for restaurant in restaurants:
-        distance_to_client = distance(
-            restaurant.coordinates[::-1],
-            get_coordinates(order.address)[::-1]
-        ).km
-        yield restaurant.name, f'{distance_to_client:0.3f}'
-
-
-def group_restaurants_by_product(order: Order, restaurant_menu_items: QuerySet) -> list[set]:
-    restaurants_grouped_by_products = []
-    for product in order.products_in_cart.all():
-        menu_item_filter = filter(
-            lambda menu_item: menu_item.product == product.product,
-            restaurant_menu_items
-        )
-        restaurants_grouped_by_products.append({
-            menu_item.restaurant
-            for menu_item in menu_item_filter
-        })
-    return restaurants_grouped_by_products
-
-
-def get_coordinates(address: str) -> tuple[_latitude, _longitude]:
-    try:
-        place = Place.objects.get(address=address)
-        timedelta_after_last_update = place.updated_at - now()
-        if timedelta_after_last_update.days > 0:
-            raise ObjectDoesNotExist
-    except ObjectDoesNotExist:
-        geocoder_api_key = settings.GEOCODER_API_KEY
-        longitude, latitude = fetch_coordinates(geocoder_api_key, address)
-        place = Place.objects.create(
-            address=address,
-            latitude=latitude,
-            longitude=longitude
-        )
-    return place.latitude, place.longitude
-
-
-def fetch_coordinates(apikey: str, address: str) -> tuple[_longitude, _latitude]:
-    base_url = "https://geocode-maps.yandex.ru/1.x"
-    response = requests.get(base_url, params={
-        "geocode": address,
-        "apikey": apikey,
-        "format": "json",
-    })
-    response.raise_for_status()
-    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
-    if not found_places:
-        return _longitude(), _latitude()
-
-    most_relevant, *_ = found_places
-    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
