@@ -16,12 +16,12 @@ _latitude = float
 _longitude = float
 
 
-def get_orders_with_available_restaurants(orders: QuerySet, restaurant_menu_items_with_places: QuerySet) -> QuerySet:
-    all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items_with_places}
+def get_orders_with_available_restaurants(orders: QuerySet, restaurant_menu_items: QuerySet) -> QuerySet:
+    all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items}
     for order in orders:
         available_restaurants = set.intersection(
             all_restaurants,
-            *_group_restaurants_by_product(order, restaurant_menu_items_with_places)
+            *_group_restaurants_by_product(order, restaurant_menu_items)
         )
         order.available_restaurants = copy.deepcopy(available_restaurants)
     return orders
