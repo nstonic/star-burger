@@ -6,7 +6,7 @@ from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
 
-from .models import Product, ProductInCart, Order
+from .models import Product, ProductInCart, Order, Banner
 from .models import ProductCategory
 from .models import Restaurant
 from .models import RestaurantMenuItem
@@ -15,6 +15,54 @@ from .models import RestaurantMenuItem
 class RestaurantMenuItemInline(admin.TabularInline):
     model = RestaurantMenuItem
     extra = 0
+
+
+class PreviewAdminMixin:
+
+    @staticmethod
+    def get_img_attr(obj, possible_attrs):
+        for attr in possible_attrs:
+            if hasattr(obj, attr):
+                return getattr(obj, attr)
+
+    def get_image_preview(self, obj):
+        img = PreviewAdminMixin.get_img_attr(obj, ['image', 'src'])
+        if not img:
+            return 'выберите картинку'
+        return format_html('<img src="{url}" style="max-height: 200px;"/>', url=img.url)
+
+    get_image_preview.short_description = 'превью'
+
+    def get_image_list_preview(self, obj):
+        img = PreviewAdminMixin.get_img_attr(obj, ['image', 'src'])
+        if not img or not obj.id:
+            return 'нет картинки'
+        edit_url = reverse('admin:foodcartapp_product_change', args=(obj.id,))
+        return format_html('<a href="{edit_url}"><img src="{src}" style="max-height: 50px;"/></a>', edit_url=edit_url,
+                           src=img.url)
+
+    get_image_list_preview.short_description = 'превью'
+
+
+@admin.register(Banner)
+class BannerAdmin(PreviewAdminMixin, admin.ModelAdmin):
+    search_fields = [
+        'title',
+        'text'
+    ]
+    list_display = [
+        'title',
+        'get_image_list_preview',
+        'text'
+    ]
+    readonly_fields = [
+        'get_image_preview',
+    ]
+    fields = [
+        'title',
+        'get_image_preview',
+        'text',
+    ]
 
 
 @admin.register(Restaurant)
@@ -35,7 +83,7 @@ class RestaurantAdmin(admin.ModelAdmin):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(PreviewAdminMixin, admin.ModelAdmin):
     list_display = [
         'get_image_list_preview',
         'name',
@@ -89,22 +137,6 @@ class ProductAdmin(admin.ModelAdmin):
                 static("admin/foodcartapp.css")
             )
         }
-
-    def get_image_preview(self, obj):
-        if not obj.image:
-            return 'выберите картинку'
-        return format_html('<img src="{url}" style="max-height: 200px;"/>', url=obj.image.url)
-
-    get_image_preview.short_description = 'превью'
-
-    def get_image_list_preview(self, obj):
-        if not obj.image or not obj.id:
-            return 'нет картинки'
-        edit_url = reverse('admin:foodcartapp_product_change', args=(obj.id,))
-        return format_html('<a href="{edit_url}"><img src="{src}" style="max-height: 50px;"/></a>', edit_url=edit_url,
-                           src=obj.image.url)
-
-    get_image_list_preview.short_description = 'превью'
 
 
 @admin.register(ProductCategory)

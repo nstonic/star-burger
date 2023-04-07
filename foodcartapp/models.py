@@ -33,8 +33,8 @@ class ProductQuerySet(models.QuerySet):
     def available(self):
         products = (
             RestaurantMenuItem.objects
-            .filter(availability=True)
-            .values_list('product')
+                .filter(availability=True)
+                .values_list('product')
         )
         return self.filter(pk__in=products)
 
@@ -231,3 +231,13 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ от {self.created_at.strftime("%d.%m.%Y %H:%M:%S")}'
+
+
+class Banner(models.Model):
+    title = models.CharField('Название', max_length=32)
+    src = models.ImageField('Изображение', upload_to='banners/')
+    text = models.CharField('Текст', max_length=100, blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Баннер'
+        verbose_name_plural = 'Баннеры'
