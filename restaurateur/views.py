@@ -132,12 +132,16 @@ def get_orders_with_available_restaurants():
         prefetch_related('products_in_cart__product'). \
         order_by('status', '-created_at')
     restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
+    for menu_item in restaurant_menu_items:
+        menu_item.restaurant.coordinates = get_coordinates(menu_item.restaurant.address)
+
     all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items}
     for order in orders:
         available_restaurants = set.intersection(
             all_restaurants,
             *group_restaurants_by_product(order, restaurant_menu_items)
         )
+
         try:
             restaurants_with_distances = dict(
                 get_restaurant_with_distance_to_client(order, available_restaurants)
@@ -156,8 +160,8 @@ def get_restaurant_with_distance_to_client(order: Order, restaurants: set) -> It
         yield str(), str()
     for restaurant in restaurants:
         distance_to_client = distance(
-            get_coordinates(order.address)[::-1],
-            get_coordinates(restaurant.address)[::-1]
+            restaurant.coordinates[::-1],
+            get_coordinates(order.address)[::-1]
         ).km
         yield restaurant.name, f'{distance_to_client:0.3f}'
 
