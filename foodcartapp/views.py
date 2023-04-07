@@ -19,10 +19,6 @@ class BannerSerializer(ModelSerializer):
 def banners_list_api(request):
     banners = Banner.objects.all().order_by('order')
     serialized_banners = [BannerSerializer(banner) for banner in banners]
-    pprint([
-        serializer.data
-        for serializer in serialized_banners
-    ])
     return JsonResponse([
         serializer.data
         for serializer in serialized_banners
