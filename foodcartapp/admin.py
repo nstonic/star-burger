@@ -1,3 +1,4 @@
+from adminsortable2.admin import SortableAdminMixin
 from django.conf import settings
 from django.contrib import admin
 from django.http import HttpResponseRedirect
@@ -46,7 +47,7 @@ class PreviewAdminMixin:
 
 
 @admin.register(Banner)
-class BannerAdmin(PreviewAdminMixin, admin.ModelAdmin):
+class BannerAdmin(PreviewAdminMixin, SortableAdminMixin, admin.ModelAdmin):
     search_fields = [
         'title',
         'text'
@@ -64,6 +65,7 @@ class BannerAdmin(PreviewAdminMixin, admin.ModelAdmin):
         'get_image_preview',
         'text',
     ]
+    ordering = ['order']
 
 
 @admin.register(Restaurant)

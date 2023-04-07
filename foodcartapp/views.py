@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from django.db import transaction
 from rest_framework.fields import IntegerField
 from rest_framework.response import Response
@@ -11,12 +13,16 @@ from .models import Product, Order, ProductInCart, Banner
 class BannerSerializer(ModelSerializer):
     class Meta:
         model = Banner
-        fields = ['title', 'src', 'text']
+        fields = ['title', 'src', 'text', 'order']
 
 
 def banners_list_api(request):
-    banners = Banner.objects.all()
+    banners = Banner.objects.all().order_by('order')
     serialized_banners = [BannerSerializer(banner) for banner in banners]
+    pprint([
+        serializer.data
+        for serializer in serialized_banners
+    ])
     return JsonResponse([
         serializer.data
         for serializer in serialized_banners

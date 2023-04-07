@@ -7,3 +7,4 @@ environs[django]==9.3.2
 phonenumbers==8.13.8
 geopy==2.3.0
 requests==2.28.2
+django-admin-sortable2==2.1.5

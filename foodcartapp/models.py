@@ -237,7 +237,9 @@ class Banner(models.Model):
     title = models.CharField('Название', max_length=32)
     src = models.ImageField('Изображение', upload_to='banners/')
     text = models.CharField('Текст', max_length=100, blank=True, null=True)
+    order = models.PositiveIntegerField(default=0, blank=True, null=True, db_index=True)
 
     class Meta:
         verbose_name = 'Баннер'
         verbose_name_plural = 'Баннеры'
+        ordering = ['order']
