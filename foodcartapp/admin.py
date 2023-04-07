@@ -60,11 +60,6 @@ class BannerAdmin(PreviewAdminMixin, SortableAdminMixin, admin.ModelAdmin):
     readonly_fields = [
         'get_image_preview',
     ]
-    fields = [
-        'title',
-        'get_image_preview',
-        'text',
-    ]
     ordering = ['order']
 
 
