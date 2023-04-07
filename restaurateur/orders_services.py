@@ -12,8 +12,8 @@ from requests import HTTPError
 from foodcartapp.models import Order, RestaurantMenuItem
 from places.models import Place
 
-_latitude = float
-_longitude = float
+_lat = float
+_lon = float
 
 
 def get_orders_with_distances_to_client(
@@ -23,14 +23,16 @@ def get_orders_with_distances_to_client(
 
     all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items}
     restaurants_addresses = {restaurant.address for restaurant in all_restaurants}
-    orders_addresses = {order.address for order in orders}
+    orders_addresses = {order.address for order in orders if not order.restaurant}
     all_places = _get_places_by_addresses(restaurants_addresses | orders_addresses)
 
     for order in orders:
         order.distance_error = False
+
         if order.restaurant:
             order.available_restaurants = []
             continue
+
         available_restaurants = set.intersection(
             all_restaurants,
             *_group_restaurants_by_product(order, restaurant_menu_items)
@@ -50,7 +52,11 @@ def get_orders_with_distances_to_client(
     return orders
 
 
-def _group_restaurants_by_product(order: Order, restaurant_menu_items: QuerySet) -> list[set]:
+def _group_restaurants_by_product(
+    order: Order,
+    restaurant_menu_items: QuerySet[RestaurantMenuItem]
+) -> list[set]:
+
     restaurants_grouped_by_products = []
     for product in order.products_in_cart.all():
         menu_item_filter = filter(
@@ -64,7 +70,7 @@ def _group_restaurants_by_product(order: Order, restaurant_menu_items: QuerySet)
     return restaurants_grouped_by_products
 
 
-def _get_places_by_addresses(addresses: Iterable[str]) -> dict[str:tuple[_latitude, _longitude]]:
+def _get_places_by_addresses(addresses: Iterable[str]) -> dict[str:tuple[_lat, _lon]]:
     places = dict()
     new_places = set()
     for address in addresses:
@@ -91,7 +97,7 @@ def _get_places_by_addresses(addresses: Iterable[str]) -> dict[str:tuple[_latitu
     return places
 
 
-def _fetch_coordinates(apikey: str, address: str) -> tuple[_longitude, _latitude]:
+def _fetch_coordinates(apikey: str, address: str) -> tuple[_lon, _lat] | list:
     base_url = "https://geocode-maps.yandex.ru/1.x"
     response = requests.get(base_url, params={
         "geocode": address,
