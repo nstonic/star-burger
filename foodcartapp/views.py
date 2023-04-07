@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from django.db import transaction
 from rest_framework.fields import IntegerField
 from rest_framework.response import Response
