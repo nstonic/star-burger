@@ -92,13 +92,8 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter(status__in=['NEW', 'PICKING', 'DELIVERING']). \
-        calculate_costs(). \
-        prefetch_related('products_in_cart__product'). \
-        order_by('status', '-created_at')
-
+    orders = Order.objects.filter_active()
     restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
-
     orders_with_distances_to_client = get_orders_with_distances_to_client(
         orders,
         restaurant_menu_items

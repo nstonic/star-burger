@@ -1,11 +1,11 @@
 from django.db import transaction
-from rest_framework.fields import IntegerField
 from rest_framework.response import Response
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.serializers import ModelSerializer
 
-from .models import Product, Order, ProductInCart, Banner
+from .models import Product, Banner
+from .order_serializers import OrderSerializer
 
 
 class BannerSerializer(ModelSerializer):
@@ -54,39 +54,11 @@ def product_list_api(request):
     })
 
 
-class ProductSerializer(ModelSerializer):
-    class Meta:
-        model = ProductInCart
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = ProductSerializer(many=True, allow_empty=False, write_only=True)
-    id = IntegerField(required=False)
-
-    class Meta:
-        model = Order
-        fields = ['id', 'products', 'firstname', 'lastname', 'phonenumber', 'address']
-
-
 @api_view(['POST'])
 @transaction.atomic
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
-    products = serializer.validated_data.pop('products')
-    order = Order.objects.create(**serializer.validated_data)
-    products_in_cart = [
-        ProductInCart(
-            product=product['product'],
-            order=order,
-            quantity=product['quantity'],
-            price=product['product'].price
-        )
-        for product in products
-    ]
-    ProductInCart.objects.bulk_create(products_in_cart)
-
+    order = serializer.create()
     serializer = OrderSerializer(order)
     return Response(serializer.data)

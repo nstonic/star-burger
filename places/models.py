@@ -3,8 +3,8 @@ from django.utils.timezone import now
 
 
 class Place(models.Model):
-    latitude = models.FloatField('Долгота')
-    longitude = models.FloatField('Широта')
+    latitude = models.FloatField('Долгота', blank=True, null=True)
+    longitude = models.FloatField('Широта', blank=True, null=True)
     address = models.CharField(
         'Адрес',
         max_length=100,

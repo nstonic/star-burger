@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from django.db.models import QuerySet, Count, Sum, F
+from django.db.models import QuerySet, Sum, F
 from django.utils.timezone import now
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -33,8 +33,8 @@ class ProductQuerySet(models.QuerySet):
     def available(self):
         products = (
             RestaurantMenuItem.objects
-                .filter(availability=True)
-                .values_list('product')
+            .filter(availability=True)
+            .values_list('product')
         )
         return self.filter(pk__in=products)
 
@@ -134,7 +134,10 @@ class ProductInCart(models.Model):
         verbose_name='Товар',
         db_index=True
     )
-    quantity = models.PositiveIntegerField('Количество')
+    quantity = models.PositiveIntegerField(
+        'Количество',
+        validators=[MinValueValidator(0)]
+    )
     order = models.ForeignKey(
         'Order',
         on_delete=models.CASCADE,
@@ -165,6 +168,12 @@ class OrderQuerySet(QuerySet):
                 F('products_in_cart__price') * F('products_in_cart__quantity')
             ))
 
+    def filter_active(self):
+        return self.filter(status__in=['NEW', 'PICKING', 'DELIVERING']). \
+            calculate_costs(). \
+            prefetch_related('products_in_cart__product'). \
+            order_by('status', '-created_at')
+
 
 class Order(models.Model):
     STATUSES = [
@@ -179,11 +188,13 @@ class Order(models.Model):
         ('CASH', 'Наличка'),
         ('CASHLESS', 'Безнал')
     ]
+
     address = models.CharField('Адрес', max_length=200)
     firstname = models.CharField('Имя', max_length=30)
     lastname = models.CharField('Фамилия', max_length=50)
     phonenumber = PhoneNumberField('Телефон', region='RU', db_index=True)
     created_at = models.DateTimeField('Создан', default=now, db_index=True)
+    comment = models.TextField('Комментарий')
     processed_at = models.DateTimeField(
         'Обработан менеджером',
         blank=True,
@@ -195,11 +206,6 @@ class Order(models.Model):
         blank=True,
         null=True,
         db_index=True
-    )
-    comment = models.TextField(
-        'Комментарий',
-        null=True,
-        blank=True
     )
     restaurant = models.ForeignKey(
         Restaurant,

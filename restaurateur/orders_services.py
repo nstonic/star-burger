@@ -7,9 +7,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from django.utils.timezone import now
 from geopy.distance import distance
-from requests import HTTPError
+from requests.exceptions import HTTPError, JSONDecodeError
 
-from foodcartapp.models import Order, RestaurantMenuItem
+from foodcartapp.models import Order, RestaurantMenuItem, Restaurant
 from places.models import Place
 
 _lat = float
@@ -20,11 +20,8 @@ def get_orders_with_distances_to_client(
     orders: QuerySet[Order],
     restaurant_menu_items: QuerySet[RestaurantMenuItem]
 ) -> QuerySet:
-
     all_restaurants = {menu_item.restaurant for menu_item in restaurant_menu_items}
-    restaurants_addresses = {restaurant.address for restaurant in all_restaurants}
-    orders_addresses = {order.address for order in orders if not order.restaurant}
-    all_places = _get_places_by_addresses(restaurants_addresses | orders_addresses)
+    all_places = _get_places(orders, all_restaurants)
 
     for order in orders:
         order.distance_error = False
@@ -56,7 +53,6 @@ def _group_restaurants_by_product(
     order: Order,
     restaurant_menu_items: QuerySet[RestaurantMenuItem]
 ) -> list[set]:
-
     restaurants_grouped_by_products = []
     for product in order.products_in_cart.all():
         menu_item_filter = filter(
@@ -70,30 +66,35 @@ def _group_restaurants_by_product(
     return restaurants_grouped_by_products
 
 
-def _get_places_by_addresses(addresses: Iterable[str]) -> dict[str:tuple[_lat, _lon]]:
+def _get_places(
+    orders: QuerySet[Order],
+    restaurants: set[Restaurant]
+) -> dict[str:tuple[_lat, _lon]]:
+
+    restaurants_addresses = {restaurant.address for restaurant in restaurants}
+    orders_addresses = {order.address for order in orders if not order.restaurant}
+    all_addresses = restaurants_addresses | orders_addresses
+    geocoder_api_key = settings.GEOCODER_API_KEY
+
     places = dict()
-    new_places = set()
-    for address in addresses:
-        try:
-            place = Place.objects.get(address=address)
-            timedelta_after_last_update = place.updated_at - now()
-            if timedelta_after_last_update.days > 0:
-                raise ObjectDoesNotExist
-            places[address] = place.latitude, place.longitude
-        except ObjectDoesNotExist:
-            geocoder_api_key = settings.GEOCODER_API_KEY
+    for address in all_addresses:
+        place, place_created = Place.objects.get_or_create(address=address)
+        timedelta_after_last_update = place.updated_at - now()
+
+        if place_created or timedelta_after_last_update.days > 0:
             try:
                 longitude, latitude = _fetch_coordinates(geocoder_api_key, address)
-            except HTTPError:
+            except (HTTPError, JSONDecodeError, KeyError, TypeError):
                 places[address] = False
             else:
-                places[address] = latitude, longitude
-                new_places.add(Place(
-                    address=address,
+                place.objects.update(
                     latitude=latitude,
                     longitude=longitude
-                ))
-    Place.objects.bulk_create(new_places)
+                )
+                places[address] = latitude, longitude
+        else:
+            places[address] = place.latitude, place.longitude
+
     return places
 
 
@@ -112,4 +113,4 @@ def _fetch_coordinates(apikey: str, address: str) -> tuple[_lon, _lat] | list:
 
     most_relevant, *_ = found_places
     lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-    return lon, lat
+    return float(lon), float(lat)
