@@ -21,14 +21,13 @@ class RestaurantMenuItemInline(admin.TabularInline):
 class PreviewAdminMixin:
 
     @staticmethod
-    def get_img_attr(obj):
-        possible_attrs = ['image', 'src']
+    def get_img_attr(obj, possible_attrs):
         for attr in possible_attrs:
             if hasattr(obj, attr):
                 return getattr(obj, attr)
 
     def get_image_preview(self, obj):
-        img = PreviewAdminMixin.get_img_attr(obj)
+        img = PreviewAdminMixin.get_img_attr(obj, ['image', 'src'])
         if not img:
             return 'выберите картинку'
         return format_html('<img src="{url}" style="max-height: 200px;"/>', url=img.url)
@@ -36,7 +35,7 @@ class PreviewAdminMixin:
     get_image_preview.short_description = 'превью'
 
     def get_image_list_preview(self, obj):
-        img = PreviewAdminMixin.get_img_attr(obj)
+        img = PreviewAdminMixin.get_img_attr(obj, ['image', 'src'])
         if not img or not obj.id:
             return 'нет картинки'
         edit_url = reverse('admin:foodcartapp_product_change', args=(obj.id,))
