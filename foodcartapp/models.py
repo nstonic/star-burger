@@ -136,7 +136,7 @@ class ProductInCart(models.Model):
     )
     quantity = models.PositiveIntegerField(
         'Количество',
-        validators=[MinValueValidator(0)]
+        validators=[MinValueValidator(1)]
     )
     order = models.ForeignKey(
         'Order',
@@ -194,7 +194,7 @@ class Order(models.Model):
     lastname = models.CharField('Фамилия', max_length=50)
     phonenumber = PhoneNumberField('Телефон', region='RU', db_index=True)
     created_at = models.DateTimeField('Создан', default=now, db_index=True)
-    comment = models.TextField('Комментарий')
+    comment = models.TextField('Комментарий', blank=True)
     processed_at = models.DateTimeField(
         'Обработан менеджером',
         blank=True,
