@@ -185,7 +185,7 @@ class OrderAdmin(admin.ModelAdmin):
         if not instance.processed_at and instance.payment and instance.restaurant:
             instance.processed_at = now()
             instance.status = 'PICKING'
-        if not instance.delivered_at and instance.status == 'CLOSED':
+        if not instance.delivered_at and instance.status in ['CLOSED', 'CANCELED']:
             instance.delivered_at = now()
         return form.save(commit=False)
 
