@@ -40,6 +40,7 @@ def _get_places(
     orders: QuerySet[Order],
     restaurants: set[Restaurant]
 ) -> dict[str:tuple[_lat, _lon]]:
+
     restaurants_addresses = {restaurant.address for restaurant in restaurants}
     orders_addresses = {order.address for order in orders if not order.restaurant}
     all_addresses = restaurants_addresses | orders_addresses
@@ -48,13 +49,14 @@ def _get_places(
     places = dict()
     for address in all_addresses:
         place, place_created = Place.objects.get_or_create(address=address)
-        timedelta_after_last_update = place.updated_at - now()
+        timedelta_after_last_update = now() - place.updated_at
 
         if place_created or timedelta_after_last_update.days > 0:
             try:
                 longitude, latitude = _fetch_coordinates(geocoder_api_key, address)
             except (HTTPError, JSONDecodeError, KeyError, TypeError):
                 places[address] = False
+                continue
             else:
                 place.latitude = latitude
                 place.longitude = longitude

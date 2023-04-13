@@ -230,7 +230,7 @@ class Order(models.Model):
         null=True,
         db_index=True
     )
-    delivered_at = models.DateTimeField(
+    finished_at = models.DateTimeField(
         'Завершён',
         blank=True,
         null=True,

@@ -171,7 +171,7 @@ class OrderAdmin(admin.ModelAdmin):
     readonly_fields = [
         'created_at',
         'processed_at',
-        'delivered_at'
+        'finished_at'
     ]
     list_filter = [
         'status'
@@ -185,8 +185,8 @@ class OrderAdmin(admin.ModelAdmin):
         if not instance.processed_at and instance.payment and instance.restaurant:
             instance.processed_at = now()
             instance.status = 'PICKING'
-        if not instance.delivered_at and instance.status in ['CLOSED', 'CANCELED']:
-            instance.delivered_at = now()
+        if not instance.finished_at and instance.status in ['CLOSED', 'CANCELED']:
+            instance.finished_at = now()
         return form.save(commit=False)
 
     def save_formset(self, request, form, formset, change):
