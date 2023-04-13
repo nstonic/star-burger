@@ -1,3 +1,5 @@
+from pprint import pprint
+
 from django.db import transaction
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -57,6 +59,10 @@ def product_list_api(request):
 @api_view(['POST'])
 @transaction.atomic
 def register_order(request):
+    phonenumber = request.data.get('phonenumber')
+    if phonenumber and phonenumber.startswith('8'):
+        request.data['phonenumber'] = f'+7{phonenumber[1:]}'
+
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     order = serializer.create()
