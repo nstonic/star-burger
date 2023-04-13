@@ -1,3 +1,5 @@
+import copy
+
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import QuerySet, Sum, F
@@ -33,8 +35,8 @@ class ProductQuerySet(models.QuerySet):
     def available(self):
         products = (
             RestaurantMenuItem.objects
-            .filter(availability=True)
-            .values_list('product')
+                .filter(availability=True)
+                .values_list('product')
         )
         return self.filter(pk__in=products)
 
@@ -173,6 +175,33 @@ class OrderQuerySet(QuerySet):
             calculate_costs(). \
             prefetch_related('products_in_cart__product'). \
             order_by('status', '-created_at')
+
+    def get_available_restaurants(self, restaurant_menu_items):
+        for order in self:
+
+            if order.restaurant:
+                order.available_restaurants = []
+                continue
+
+            available_restaurants = set.intersection(
+                *self._group_restaurants_by_product(order, restaurant_menu_items)
+            )
+            order.available_restaurants = copy.deepcopy(available_restaurants)
+        return self
+
+    @staticmethod
+    def _group_restaurants_by_product(order, restaurant_menu_items: QuerySet[RestaurantMenuItem]) -> list[set]:
+        restaurants_grouped_by_products = []
+        for product in order.products_in_cart.all():
+            menu_item_filter = filter(
+                lambda menu_item: menu_item.product == product.product,
+                restaurant_menu_items
+            )
+            restaurants_grouped_by_products.append({
+                menu_item.restaurant
+                for menu_item in menu_item_filter
+            })
+        return restaurants_grouped_by_products or [{}]
 
 
 class Order(models.Model):

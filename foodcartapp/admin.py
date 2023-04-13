@@ -200,8 +200,18 @@ class OrderAdmin(admin.ModelAdmin):
     def response_change(self, request, obj):
         response = super().response_change(request, obj)
         next_url = request.GET.get('next')
-        allowed_url = url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS)
-        if next_url and allowed_url:
+        next_url_is_allowed = url_has_allowed_host_and_scheme(next_url, settings.ALLOWED_HOSTS)
+        if next_url and next_url_is_allowed:
             return HttpResponseRedirect(next_url)
         else:
             return response
+
+    # def formfield_for_foreignkey(self, db_field, request, **kwargs):
+    #     instance = super().formfield_for_foreignkey(db_field, request, **kwargs)
+    #     # for i in ['clean', 'default_error_messages', 'default_validators', 'disabled', 'empty_label', 'empty_values', 'error_messages', 'get_bound_field', 'get_limit_choices_to', 'has_changed', 'help_text', 'hidden_widget', 'initial', 'iterator', 'label', 'label_from_instance', 'label_suffix', 'limit_choices_to', 'localize', 'prepare_value', 'queryset', 'required', 'run_validators', 'show_hidden_initial', 'to_field_name', 'to_python', 'valid_value', 'validate', 'validators', 'widget', 'widget_attrs']:
+    #     #     print(i, getattr(instance,i))
+    #     model = instance.queryset.model
+    #     if model.__name__ == 'Restaurant':
+    #         for choice_obj, choice_verbose in instance.choices:
+    #             if choice_verbose not in []
+    #     return instance

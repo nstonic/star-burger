@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from restaurateur.orders_services import get_orders_with_distances_to_client
+from foodcartapp.orders_services import get_orders_with_distances_to_client
 
 
 class Login(forms.Form):
@@ -92,8 +92,8 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter_active()
     restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
+    orders = Order.objects.filter_active().get_available_restaurants(restaurant_menu_items)
     orders_with_distances_to_client = get_orders_with_distances_to_client(
         orders,
         restaurant_menu_items

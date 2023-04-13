@@ -1,9 +1,5 @@
-import copy
-from typing import Iterable
-
 import requests
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from django.utils.timezone import now
 from geopy.distance import distance
@@ -26,15 +22,6 @@ def get_orders_with_distances_to_client(
     for order in orders:
         order.distance_error = False
 
-        if order.restaurant:
-            order.available_restaurants = []
-            continue
-
-        available_restaurants = set.intersection(
-            all_restaurants,
-            *_group_restaurants_by_product(order, restaurant_menu_items)
-        )
-        order.available_restaurants = copy.deepcopy(available_restaurants)
         order_coordinates = all_places[order.address]
         for restaurant in order.available_restaurants:
             restaurant_coordinates = all_places[restaurant.address]
@@ -49,28 +36,10 @@ def get_orders_with_distances_to_client(
     return orders
 
 
-def _group_restaurants_by_product(
-    order: Order,
-    restaurant_menu_items: QuerySet[RestaurantMenuItem]
-) -> list[set]:
-    restaurants_grouped_by_products = []
-    for product in order.products_in_cart.all():
-        menu_item_filter = filter(
-            lambda menu_item: menu_item.product == product.product,
-            restaurant_menu_items
-        )
-        restaurants_grouped_by_products.append({
-            menu_item.restaurant
-            for menu_item in menu_item_filter
-        })
-    return restaurants_grouped_by_products
-
-
 def _get_places(
     orders: QuerySet[Order],
     restaurants: set[Restaurant]
 ) -> dict[str:tuple[_lat, _lon]]:
-
     restaurants_addresses = {restaurant.address for restaurant in restaurants}
     orders_addresses = {order.address for order in orders if not order.restaurant}
     all_addresses = restaurants_addresses | orders_addresses
@@ -87,14 +56,11 @@ def _get_places(
             except (HTTPError, JSONDecodeError, KeyError, TypeError):
                 places[address] = False
             else:
-                place.objects.update(
-                    latitude=latitude,
-                    longitude=longitude
-                )
-                places[address] = latitude, longitude
-        else:
-            places[address] = place.latitude, place.longitude
+                place.latitude = latitude
+                place.longitude = longitude
+                place.save()
 
+        places[address] = place.latitude, place.longitude
     return places
 
 
