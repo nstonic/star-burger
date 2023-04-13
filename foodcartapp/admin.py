@@ -6,6 +6,7 @@ from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 
 from .models import Product, ProductInCart, Order, Banner
 from .models import ProductCategory
@@ -168,7 +169,9 @@ class OrderAdmin(admin.ModelAdmin):
         'id'
     ]
     readonly_fields = [
-        'created_at'
+        'created_at',
+        'processed_at',
+        'delivered_at'
     ]
     list_filter = [
         'status'
@@ -176,6 +179,15 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [
         ProductInCartInline
     ]
+
+    def save_form(self, request, form, change):
+        instance = form.save(commit=False)
+        if not instance.processed_at and instance.payment and instance.restaurant:
+            instance.processed_at = now()
+            instance.status = 'PICKING'
+        if not instance.delivered_at and instance.status == 'CLOSED':
+            instance.delivered_at = now()
+        return form.save(commit=False)
 
     def save_formset(self, request, form, formset, change):
         instances = formset.save(commit=False)
