@@ -60,7 +60,7 @@ SECRET_KEY=django-insecure-0if40nf4nf93n4
 ```
 Определите переменную окружения `GEOCODER_API_KEY`. Создать файл `.env` в каталоге `star_burger/` и положите туда api-token от Yandex geocoder API:
 ```sh
-SECRET_KEY='Yandex geocoder API TOKEN'
+GEOCODER_API_KEY='Yandex geocoder API TOKEN'
 ```
 Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
 
