@@ -129,7 +129,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "bundles")
 ]
 
-
 repo = Repo(path=BASE_DIR)
 local_branch = repo.active_branch.name
 version = repo.git.version_info
@@ -137,6 +136,6 @@ version = repo.git.version_info
 ROLLBAR = {
     'access_token': env('ROLL_BAR_ACCESS_TOKEN', ''),
     'environment': env('ROLL_BAR_ENVIRONMENT', local_branch),
-    'code_version': '.'.join(version),
+    'code_version': '.'.join(map(str, version)),
     'root': BASE_DIR,
 }
