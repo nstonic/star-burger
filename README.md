@@ -62,6 +62,13 @@ SECRET_KEY=django-insecure-0if40nf4nf93n4
 ```sh
 GEOCODER_API_KEY='Yandex geocoder API TOKEN'
 ```
+Для настройки Rollbar определите 2 переменных окружения:
+
+```sh
+ROLL_BAR_ENVIRONMENT = my_environment
+ROLL_BAR_ACCESS_TOKEN = my_token
+```
+
 Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
 
 ```sh
