@@ -58,6 +58,17 @@ pip install -r requirements.txt
 ```sh
 SECRET_KEY=django-insecure-0if40nf4nf93n4
 ```
+Настроить базу-данных можно с помощью переменной окружения `DB_URL`. Просто положите в нее ссылку на базу данных следующего вида:
+
+```sh
+для postgres
+DB_URL = postgres://USER:PASSWORD@HOST:PORT/NAME
+
+для sqlite
+DB_URL = sqlite:///PATH
+```
+
+
 Определите переменную окружения `GEOCODER_API_KEY`. Создать файл `.env` в каталоге `star_burger/` и положите туда api-token от Yandex geocoder API:
 ```sh
 GEOCODER_API_KEY='Yandex geocoder API TOKEN'
