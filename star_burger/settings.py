@@ -2,6 +2,7 @@ import os
 
 import dj_database_url
 
+from git import Repo
 from environs import Env
 
 env = Env()
@@ -41,6 +42,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddlewareExcluding404'
 ]
 
 ROOT_URLCONF = 'star_burger.urls'
@@ -124,3 +126,14 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),
     os.path.join(BASE_DIR, "bundles")
 ]
+
+repo = Repo(path=BASE_DIR)
+local_branch = repo.active_branch.name
+version = repo.git.version_info
+
+ROLLBAR = {
+    'access_token': env('ROLL_BAR_ACCESS_TOKEN', ''),
+    'environment': env('ROLL_BAR_ENVIRONMENT', local_branch),
+    'code_version': '.'.join(version),
+    'root': BASE_DIR,
+}
