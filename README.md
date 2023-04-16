@@ -65,8 +65,8 @@ GEOCODER_API_KEY='Yandex geocoder API TOKEN'
 Для настройки Rollbar определите 2 переменных окружения:
 
 ```sh
-ROLL_BAR_ENVIRONMENT = my_environment
-ROLL_BAR_ACCESS_TOKEN = my_token
+ROLLBAR_ENVIRONMENT = my_environment
+ROLLBAR_ACCESS_TOKEN = my_token
 ```
 
 Создайте файл базы данных SQLite и отмигрируйте её следующей командой:
