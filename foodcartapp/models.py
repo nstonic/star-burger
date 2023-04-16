@@ -201,7 +201,7 @@ class OrderQuerySet(QuerySet):
                 menu_item.restaurant
                 for menu_item in menu_item_filter
             })
-        return restaurants_grouped_by_products or [{}]
+        return restaurants_grouped_by_products or [set()]
 
 
 class Order(models.Model):
