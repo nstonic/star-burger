@@ -134,8 +134,8 @@ local_branch = repo.active_branch.name
 version = repo.git.version_info
 
 ROLLBAR = {
-    'access_token': env('ROLL_BAR_ACCESS_TOKEN', ''),
-    'environment': env('ROLL_BAR_ENVIRONMENT', local_branch),
+    'access_token': env('ROLLBAR_ACCESS_TOKEN', default=''),
+    'environment': env('ROLLBAR_ENVIRONMENT', default=local_branch),
     'code_version': '.'.join(map(str, version)),
-    'root': BASE_DIR,
+    'root': BASE_DIR
 }
