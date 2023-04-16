@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import requests
 from django.conf import settings
 from django.db.models import QuerySet
@@ -42,7 +44,7 @@ def _get_places(
 ) -> dict[str:tuple[_lat, _lon]]:
 
     restaurants_addresses = {restaurant.address for restaurant in restaurants}
-    orders_addresses = {order.address for order in orders if not order.restaurant}
+    orders_addresses = {order.address for order in orders}
     all_addresses = restaurants_addresses | orders_addresses
     geocoder_api_key = settings.GEOCODER_API_KEY
 
