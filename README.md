@@ -173,6 +173,3 @@ Parcel будет следить за файлами в каталоге `bundle
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
 
-Где используется репозиторий:
-
-- Второй и третий урок [учебного курса Django](https://dvmn.org/modules/django/)
