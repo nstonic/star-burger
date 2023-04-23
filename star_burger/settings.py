@@ -9,7 +9,6 @@ env = Env()
 env.read_env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', False)
@@ -91,6 +90,7 @@ DATABASES = {
     )
 }
 
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -139,3 +139,5 @@ ROLLBAR = {
     'code_version': '.'.join(map(str, version)),
     'root': BASE_DIR
 }
+
+CSRF_TRUSTED_ORIGINS = ['https://starburger.ns-tonic.site']
