@@ -145,5 +145,4 @@ cython_debug/
 .idea/
 star-burger-products-master/
 data.json
-*.sh
 static/
