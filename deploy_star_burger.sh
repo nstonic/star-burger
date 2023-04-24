@@ -28,7 +28,7 @@ REVISION=$(git rev-parse --short HEAD)
 
 curl "https://api.rollbar.com/api/1/deploy/" \
      -F access_token=$ROLLBAR_ACCESS_TOKEN \
-     -F environment="production" \
+     -F environment=$ROLLBAR_ENVIRONMENT \
      -F revision=$REVISION \
      -F local_username="root"
 
