@@ -95,8 +95,6 @@ class ProductAdmin(PreviewAdminMixin, admin.ModelAdmin):
         'category',
     ]
     search_fields = [
-        # FIXME SQLite can not convert letter case for cyrillic words properly, so search will be buggy.
-        # Migration to PostgreSQL is necessary
         'name',
         'category__name',
     ]
@@ -206,3 +204,11 @@ class OrderAdmin(admin.ModelAdmin):
         else:
             return response
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'restaurant':
+            *_, order_id, _, _ = request.path.split('/')
+            restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
+            order = Order.objects.filter(pk=order_id).get_available_restaurants(restaurant_menu_items).first()
+            available_restaurants_ids = {restaurant.id for restaurant in order.available_restaurants}
+            kwargs["queryset"] = Restaurant.objects.filter(pk__in=available_restaurants_ids)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
