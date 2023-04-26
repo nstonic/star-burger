@@ -1,9 +1,6 @@
 from django.db import transaction
-from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from django.http import JsonResponse
+from rest_framework import mixins, viewsets
 
 from .models import Product, Banner, Order
 from .serializers import OrderSerializer, BannerSerializer
@@ -49,29 +46,17 @@ def product_list_api(request):
     })
 
 
-class OrderViewSet(viewsets.ViewSet):
+class OrderViewSet(mixins.CreateModelMixin,
+                   mixins.DestroyModelMixin,
+                   mixins.UpdateModelMixin,
+                   viewsets.GenericViewSet):
 
-    # @action(detail=True, methods=['post'])
+    serializer_class = OrderSerializer
+    queryset = Order.objects.all()
+
     @transaction.atomic
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         phonenumber = request.data.get('phonenumber')
         if phonenumber and phonenumber.startswith('8'):
             request.data['phonenumber'] = f'+7{phonenumber[1:]}'
-
-        serializer = OrderSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        order = serializer.create()
-        serializer = OrderSerializer(order)
-        return Response(serializer.data)
-
-    def update(self, request, pk):
-        pass
-
-    def partial_update(self, request, pk):
-        pass
-
-    # @action(detail=False, methods=['delete'])
-    def destroy(self, request, pk):
-        order = get_object_or_404(Order, pk=pk)
-        order.delete()
-        return Response()
+        return super().create(request, *args, **kwargs)

@@ -1,3 +1,4 @@
+from rest_framework import mixins, viewsets
 from rest_framework.fields import IntegerField
 from rest_framework.serializers import ModelSerializer
 
@@ -18,9 +19,9 @@ class OrderSerializer(ModelSerializer):
         model = Order
         fields = ['id', 'products', 'firstname', 'lastname', 'phonenumber', 'address']
 
-    def create(self):
-        products = self.validated_data.pop('products')
-        order = super().create(self.validated_data)
+    def create(self, validated_data):
+        products = validated_data.pop('products')
+        order = super().create(validated_data)
         products_in_cart = [
             ProductInCart(
                 product=product['product'],
