@@ -178,11 +178,6 @@ class OrderQuerySet(QuerySet):
 
     def get_available_restaurants(self, restaurant_menu_items):
         for order in self:
-
-            if order.restaurant:
-                order.available_restaurants = []
-                continue
-
             available_restaurants = set.intersection(
                 *self._group_restaurants_by_product(order, restaurant_menu_items)
             )
