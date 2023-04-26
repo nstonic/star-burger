@@ -205,4 +205,4 @@ class OrderAdmin(admin.ModelAdmin):
             return HttpResponseRedirect(next_url)
         else:
             return response
-        
+

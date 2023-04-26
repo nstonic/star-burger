@@ -1,7 +1,7 @@
 from rest_framework.fields import IntegerField
 from rest_framework.serializers import ModelSerializer
 
-from foodcartapp.models import ProductInCart, Order
+from foodcartapp.models import ProductInCart, Order, Banner
 
 
 class ProductSerializer(ModelSerializer):
@@ -33,3 +33,9 @@ class OrderSerializer(ModelSerializer):
         ProductInCart.objects.bulk_create(products_in_cart)
 
         return order
+
+
+class BannerSerializer(ModelSerializer):
+    class Meta:
+        model = Banner
+        fields = ['title', 'src', 'text', 'order']

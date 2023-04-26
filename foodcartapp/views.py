@@ -1,17 +1,12 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
-from rest_framework.serializers import ModelSerializer
 
-from .models import Product, Banner
-from .order_serializers import OrderSerializer
-
-
-class BannerSerializer(ModelSerializer):
-    class Meta:
-        model = Banner
-        fields = ['title', 'src', 'text', 'order']
+from .models import Product, Banner, Order
+from .serializers import OrderSerializer, BannerSerializer
 
 
 def banners_list_api(request):
@@ -54,15 +49,29 @@ def product_list_api(request):
     })
 
 
-@api_view(['POST'])
-@transaction.atomic
-def register_order(request):
-    phonenumber = request.data.get('phonenumber')
-    if phonenumber and phonenumber.startswith('8'):
-        request.data['phonenumber'] = f'+7{phonenumber[1:]}'
+class OrderViewSet(viewsets.ViewSet):
 
-    serializer = OrderSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    order = serializer.create()
-    serializer = OrderSerializer(order)
-    return Response(serializer.data)
+    # @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def create(self, request):
+        phonenumber = request.data.get('phonenumber')
+        if phonenumber and phonenumber.startswith('8'):
+            request.data['phonenumber'] = f'+7{phonenumber[1:]}'
+
+        serializer = OrderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.create()
+        serializer = OrderSerializer(order)
+        return Response(serializer.data)
+
+    def update(self, request, pk):
+        pass
+
+    def partial_update(self, request, pk):
+        pass
+
+    # @action(detail=False, methods=['delete'])
+    def destroy(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        order.delete()
+        return Response()
