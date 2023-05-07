@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import QuerySet, Sum, F
@@ -178,6 +180,7 @@ class OrderQuerySet(QuerySet):
             order_by('status', '-created_at')
 
     def get_available_restaurants(self):
+        orders_ids = (str(order.id) for order in self)
         available_restaurants = super().raw(
             """
             SELECT pic.id, rmi.id, o.id ord_id, r.id res_id
@@ -185,18 +188,25 @@ class OrderQuerySet(QuerySet):
             JOIN foodcartapp_productincart pic ON pic.order_id=o.id
             JOIN foodcartapp_restaurantmenuitem rmi ON pic.product_id=rmi.product_id
             JOIN foodcartapp_restaurant r ON rmi.product_id=r.id
-            """
+            WHERE o.id IN ({})
+            """.format(','.join(orders_ids))
+            # Пришлось использовать format. Джанговый плейсхолдер %s автоматически оборачивается в кавычки
         )
+        restaurants = Restaurant.objects.all()
         for order in self:
             order_rests = filter(
                 lambda order_rest: order_rest.ord_id == order.id,
                 available_restaurants
             )
-            order_restaurants_ids = (
+            order_restaurants_ids = [
                 order_rest.res_id
                 for order_rest in order_rests
-            )
-            order.available_restaurants = Restaurant.objects.filter(pk__in=order_restaurants_ids)
+            ]
+            order.available_restaurants = [
+                deepcopy(restaurant)
+                for restaurant in restaurants
+                if restaurant.id in order_restaurants_ids
+            ]
         return self
 
     def get_distances_to_client(self):
