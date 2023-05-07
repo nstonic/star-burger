@@ -206,9 +206,8 @@ class OrderAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'restaurant':
-            *_, order_id, _, _ = request.path.split('/')
-            restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
-            order = Order.objects.filter(pk=order_id).get_available_restaurants(restaurant_menu_items).first()
+            order_id = request.resolver_match.kwargs['object_id']
+            order = Order.objects.filter(pk=order_id).get_available_restaurants().first()
             available_restaurants_ids = {restaurant.id for restaurant in order.available_restaurants}
-            kwargs["queryset"] = Restaurant.objects.filter(pk__in=available_restaurants_ids)
+            kwargs['queryset'] = Restaurant.objects.filter(pk__in=available_restaurants_ids)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

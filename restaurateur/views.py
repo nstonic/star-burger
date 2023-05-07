@@ -7,8 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
-from foodcartapp.orders_services import get_orders_with_distances_to_client
+from foodcartapp.models import Product, Restaurant, Order
 
 
 class Login(forms.Form):
@@ -92,13 +91,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    restaurant_menu_items = RestaurantMenuItem.objects.all().select_related('restaurant', 'product')
-    orders = Order.objects.filter_active().get_available_restaurants(restaurant_menu_items)
-    orders_with_distances_to_client = get_orders_with_distances_to_client(
-        orders,
-        restaurant_menu_items
-    )
-
+    orders = Order.objects.filter_active().get_available_restaurants().get_distances_to_client() or []
     context = {
         'orders': [
             {
@@ -112,7 +105,7 @@ def view_orders(request):
                 'restaurant': order.restaurant,
                 'available_restaurants': order.available_restaurants,
                 'distance_error': order.distance_error
-            } for order in orders_with_distances_to_client
+            } for order in orders
         ],
         'current_url': request.path
     }

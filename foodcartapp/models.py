@@ -1,10 +1,11 @@
-import copy
-
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import QuerySet, Sum, F
 from django.utils.timezone import now
+from geopy.distance import distance
 from phonenumber_field.modelfields import PhoneNumberField
+
+from foodcartapp.geo_services import _get_places
 
 
 class Restaurant(models.Model):
@@ -35,8 +36,8 @@ class ProductQuerySet(models.QuerySet):
     def available(self):
         products = (
             RestaurantMenuItem.objects
-                .filter(availability=True)
-                .values_list('product')
+            .filter(availability=True)
+            .values_list('product')
         )
         return self.filter(pk__in=products)
 
@@ -176,27 +177,50 @@ class OrderQuerySet(QuerySet):
             prefetch_related('products_in_cart__product'). \
             order_by('status', '-created_at')
 
-    def get_available_restaurants(self, restaurant_menu_items):
+    def get_available_restaurants(self):
+        available_restaurants = super().raw(
+            """
+            SELECT pic.id, rmi.id, o.id ord_id, r.id res_id
+            FROM foodcartapp_order o
+            JOIN foodcartapp_productincart pic ON pic.order_id=o.id
+            JOIN foodcartapp_restaurantmenuitem rmi ON pic.product_id=rmi.product_id
+            JOIN foodcartapp_restaurant r ON rmi.product_id=r.id
+            """
+        )
         for order in self:
-            available_restaurants = set.intersection(
-                *self._group_restaurants_by_product(order, restaurant_menu_items)
+            order_rests = filter(
+                lambda order_rest: order_rest.ord_id == order.id,
+                available_restaurants
             )
-            order.available_restaurants = copy.deepcopy(available_restaurants)
+            order_restaurants_ids = (
+                order_rest.res_id
+                for order_rest in order_rests
+            )
+            order.available_restaurants = Restaurant.objects.filter(pk__in=order_restaurants_ids)
         return self
 
-    @staticmethod
-    def _group_restaurants_by_product(order, restaurant_menu_items: QuerySet[RestaurantMenuItem]) -> list[set]:
-        restaurants_grouped_by_products = []
-        for product in order.products_in_cart.all():
-            menu_item_filter = filter(
-                lambda menu_item: menu_item.product == product.product,
-                restaurant_menu_items
-            )
-            restaurants_grouped_by_products.append({
-                menu_item.restaurant
-                for menu_item in menu_item_filter
-            })
-        return restaurants_grouped_by_products or [set()]
+    def get_distances_to_client(self):
+        restaurant_addresses = set()
+        for order in self:
+            for restaurant in order.available_restaurants:
+                restaurant_addresses.add(restaurant.address)
+        orders_addresses = {order.address for order in self}
+        all_places = _get_places(restaurant_addresses | orders_addresses)
+
+        for order in self:
+            order.distance_error = False
+            order_coordinates = all_places[order.address]
+            for restaurant in order.available_restaurants:
+                restaurant_coordinates = all_places[restaurant.address]
+                if not order_coordinates or not restaurant_coordinates:
+                    order.distance_error = True
+                    break
+                distance_to_client = distance(
+                    restaurant_coordinates,
+                    order_coordinates
+                ).km
+                restaurant.distance_to_client = f'{distance_to_client:0.3f}'
+        return self
 
 
 class Order(models.Model):
