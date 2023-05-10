@@ -50,7 +50,6 @@ class OrderViewSet(mixins.CreateModelMixin,
                    mixins.DestroyModelMixin,
                    mixins.UpdateModelMixin,
                    viewsets.GenericViewSet):
-
     serializer_class = OrderSerializer
     queryset = Order.objects.all()
 
@@ -58,5 +57,5 @@ class OrderViewSet(mixins.CreateModelMixin,
     def create(self, request, *args, **kwargs):
         phonenumber = request.data.get('phonenumber')
         if phonenumber and phonenumber.startswith('8'):
-            request.data['phonenumber'] = f'+7{phonenumber[1:]}'
+            phonenumber.replace('8', '+7', 1)
         return super().create(request, *args, **kwargs)
