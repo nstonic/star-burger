@@ -180,7 +180,12 @@ class OrderAdmin(admin.ModelAdmin):
 
     def save_form(self, request, form, change):
         instance = form.save(commit=False)
-        if not instance.processed_at and instance.payment and instance.restaurant:
+        if (
+            not instance.processed_at
+            and instance.payment
+            and instance.restaurant
+            and instance.status not in ['DELIVERING', 'CLOSED', 'CANCELED']
+        ):
             instance.processed_at = now()
             instance.status = 'PICKING'
         if not instance.finished_at and instance.status in ['CLOSED', 'CANCELED']:
