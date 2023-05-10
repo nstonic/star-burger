@@ -27,10 +27,16 @@
       {% for order in orders %}
         <tr>
           <td>{{ order.id }}</td>
-          <td>{{ order.status }}</td>
-          <td>{{ order.payment }}</td>
-          <td>{{ order.cost }} руб.</td>
-          <td>{{ order.client }}</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.get_payment_display }}</td>
+          <td>
+          {% if order.cost %}
+            {{ order.cost }} руб.
+          {% else %}
+            0
+          {% endif %}
+          </td>
+          <td>{{ order.firstname }} {{ order.lastname }}</td>
           <td>{{ order.phonenumber }}</td>
           <td>{{ order.address }}</td>
           <td>

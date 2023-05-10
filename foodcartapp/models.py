@@ -176,7 +176,6 @@ class OrderQuerySet(QuerySet):
     def filter_active(self):
         return self.filter(status__in=['NEW', 'PICKING', 'DELIVERING']). \
             calculate_costs(). \
-            prefetch_related('products_in_cart__product'). \
             order_by('status', '-created_at')
 
     def get_available_restaurants(self):

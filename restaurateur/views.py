@@ -91,22 +91,9 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    orders = Order.objects.filter_active().get_available_restaurants().get_distances_to_client() or []
+    orders = Order.objects.filter_active().get_available_restaurants().get_distances_to_client()
     context = {
-        'orders': [
-            {
-                'id': order.id,
-                'status': order.get_status_display(),
-                'payment': order.get_payment_display(),
-                'cost': order.cost or 0,
-                'client': f'{order.firstname} {order.lastname}',
-                'phonenumber': order.phonenumber,
-                'address': order.address,
-                'restaurant': order.restaurant,
-                'available_restaurants': order.available_restaurants,
-                'distance_error': order.distance_error
-            } for order in orders
-        ],
+        'orders': orders,
         'current_url': request.path
     }
     return render(request, template_name='order_items.html', context=context)
